@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
@@ -38,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
         setTheme(R.style.Theme_ETA_HDS);
         setContentView(R.layout.activity_main);
         img = findViewById(R.id.imageView);
+
+
+
+        //Gallery
         ActivityResultLauncher<String> gallery = registerForActivityResult(new ActivityResultContracts.GetContent(),
                 new ActivityResultCallback<Uri>() {
                     @Override
@@ -60,6 +65,11 @@ public class MainActivity extends AppCompatActivity {
                 storagePermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
             }
         });
+
+
+
+
+        //Camera
         ActivityResultLauncher<Uri> photo = registerForActivityResult(new ActivityResultContracts.TakePicture(), new ActivityResultCallback<Boolean>() {
             @Override
             public void onActivityResult(Boolean result) {
@@ -89,7 +99,17 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Camera Permission required", Toast.LENGTH_SHORT).show();
                     }
                 });
-        ActivityResultLauncher<String> npermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+        findViewById(R.id.button3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cameraPermission.launch(Manifest.permission.CAMERA);
+            }
+        });
+
+
+
+        //Convert
+        ActivityResultLauncher<String> nPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(),
                 result -> {
                     if (result) {
                         Toast.makeText(MainActivity.this, "Permission granted", Toast.LENGTH_SHORT).show();
@@ -98,18 +118,46 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Permission required", Toast.LENGTH_SHORT).show();
                     }
                 });
-        findViewById(R.id.button3).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                cameraPermission.launch(Manifest.permission.CAMERA);
-            }
-        });
+
 
         findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                npermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
+                nPermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
             }
         });
+
+
+
+        //Cropper
+        ActivityResultLauncher<String> mGetContent=registerForActivityResult(new ActivityResultContracts.GetContent(), new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri result) {
+                Intent in=new Intent(MainActivity.this,CropperActivity.class);
+                in.putExtra("DATA",result.toString());
+                startActivityForResult(in,101);
+            }
+        });
+        findViewById(R.id.b4).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mGetContent.launch("image/*");
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==-1 && requestCode==101)
+        {
+            String result=data.getStringExtra("RESULT");
+            Uri resultUri=null;
+            if(result!=null)
+            {
+                resultUri=Uri.parse(result);
+            }
+            img.setImageURI(resultUri);
+        }
     }
 }
